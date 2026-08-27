@@ -1,0 +1,31 @@
+# 毎時の全件スキャン。エンドポイントを叩くだけで、このリポジトリはデータを持たない。
+# 公開リポジトリなので実行ログも公開される。レスポンス本文は絶対に出力しない
+# （URLとトークンはSecretsなので自動マスクされるが、本文はマスクされない）。
+name: track-hourly
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: track-hourly
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 全件スキャンをキック
+        env:
+          URL: ${{ secrets.REPORT_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -sS -X POST "$URL/api/track/run" \
+            -H "authorization: Bearer $SECRET" \
+            --max-time 320 -o /dev/null -w '%{http_code}')
+          echo "status=$code"
+          test "$code" = "200"

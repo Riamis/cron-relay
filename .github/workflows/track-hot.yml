@@ -1,0 +1,31 @@
+# 投稿直後の初速を測るための短間隔スキャン。対象が無ければVercel側が即座にスキップする。エンドポイントを叩くだけで、このリポジトリはデータを持たない。
+# 公開リポジトリなので実行ログも公開される。レスポンス本文は絶対に出力しない
+# （URLとトークンはSecretsなので自動マスクされるが、本文はマスクされない）。
+name: track-hot
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: track-hot
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ホット追跡をキック
+        env:
+          URL: ${{ secrets.REPORT_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -sS -X POST "$URL/api/track/hot" \
+            -H "authorization: Bearer $SECRET" \
+            --max-time 110 -o /dev/null -w '%{http_code}')
+          echo "status=$code"
+          test "$code" = "200"
