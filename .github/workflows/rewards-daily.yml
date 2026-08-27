@@ -1,0 +1,30 @@
+# ASP報酬の日次取り込み。JST 0:20（UTC 15:20）に前日までの確定値を取り直す。
+# 公開リポジトリなので実行ログにはHTTPステータスしか出さない。
+name: rewards-daily
+
+on:
+  schedule:
+    - cron: '20 15 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: rewards-daily
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 報酬の取り込みをキック
+        env:
+          URL: ${{ secrets.REPORT_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -sS -X POST "$URL/api/rewards-collect" \
+            -H "authorization: Bearer $SECRET" \
+            --max-time 150 -o /dev/null -w '%{http_code}')
+          echo "status=$code"
+          test "$code" = "200"

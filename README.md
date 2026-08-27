@@ -9,5 +9,6 @@ intentionally print HTTP status codes only, never response bodies.
 | Workflow | Schedule | Purpose |
 | --- | --- | --- |
 | `track-hourly` | hourly | full scan trigger |
-| `track-hot` | every 5 min | short-interval trigger |
+| `track-hot` | every 10 min | short-interval trigger |
+| `rewards-daily` | daily | daily import trigger |
 | `keepalive` | monthly | keeps scheduled workflows enabled |
